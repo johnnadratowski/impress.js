@@ -16,6 +16,39 @@ class Step1 extends StepBase {
     `
   }
 
+  styles() {
+    return {
+      '#payload': {
+        height: '275px',
+        position: 'absolute',
+        top: '200px',
+        left: '-2100px',
+        opacity: 0
+      },
+      '#database': {
+        height: '275px',
+        position: 'absolute',
+        left: '450px',
+        top: '150px',
+        opacity: 0
+      },
+      '#email': {
+        height: '375px',
+        position: 'absolute',
+        left: '450px',
+        top: '150px',
+        opacity: 0
+      },
+      '#server': {
+        height: '275px',
+        position: 'absolute',
+        left: '450px',
+        top: '150px',
+        opacity: 0
+      }
+    }
+  }
+
   substeps() {
     return [
       anime(
@@ -52,40 +85,6 @@ class Step1 extends StepBase {
         })
     }
     return t
-  }
-
-  styles() {
-
-    return {
-      '#payload': {
-        height: '275px',
-        position: 'absolute',
-        top: '200px',
-        left: '-2100px',
-        opacity: 0
-      },
-      '#database': {
-        height: '275px',
-        position: 'absolute',
-        left: '450px',
-        top: '150px',
-        opacity: 0
-      },
-      '#email': {
-        height: '375px',
-        position: 'absolute',
-        left: '450px',
-        top: '150px',
-        opacity: 0
-      },
-      '#server': {
-        height: '275px',
-        position: 'absolute',
-        left: '450px',
-        top: '150px',
-        opacity: 0
-      }
-    }
   }
 }
 
