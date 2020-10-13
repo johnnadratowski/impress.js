@@ -27,7 +27,7 @@ class StepBase extends HTMLElement {
   initialize() {
     this.addEventListener('impress:substep:enter', this.doNext)
     this.addEventListener('impress:substep:leave', this.doPrev)
-    this.step = -1
+    this.step = this.step === undefined ? -1 : this.step
     this.initialized = true
   }
 
@@ -40,8 +40,8 @@ class StepBase extends HTMLElement {
   destroy() {
     this.removeEventListener('impress:substep:enter', this.doNext)
     this.removeEventListener('impress:substep:leave', this.doPrev)
-    this.resetSteps()
-    this.step = -1
+    // this.resetSteps()
+    // this.step = -1
     this.initialized = false
   }
 
@@ -69,10 +69,21 @@ class StepBase extends HTMLElement {
     if (this.initialized) return
 
     this.initialize()
-    this.buildView()
-    this.setStyles()
+    if (this.step === -1) {
+      this.buildView()
+      this.setStyles()
 
-    this.steps = this.substeps().map(this.buildStep)
+      this.steps = this.substeps().map(this.buildStep)
+
+      const step = this.retrieveStep()
+      if (step) {
+        this.step = step
+        this.redoSteps(step)
+      }
+    } else {
+      setTimeout(() => this.setSubstepClasses(this.step), 0)
+      this.storeStep()
+    }
   }
 
   stepLeave(e) {
@@ -80,9 +91,10 @@ class StepBase extends HTMLElement {
     if (!e.target === this) return
     if (!this.initialized) return
     this.destroy()
+    this.removeStep()
   }
 
-  doNext(e) {
+  async doNext(e) {
     console.log('NEXT SUBSTEP: ', e)
     if (this.step + 1 >= this.steps.length) {
       return
@@ -92,16 +104,74 @@ class StepBase extends HTMLElement {
     const current = this.steps[this.step]
     if (!current) return
 
-    this.play(current)
+    await this.play(current)
+
+    this.storeStep()
   }
 
-  doPrev(e) {
+  async doPrev(e) {
     console.log('PREV SUBSTEP: ', e)
     const current = this.steps[this.step]
     if (!current) return
 
-    this.reverseStep(current)
     this.step--
+    this.storeStep()
+    await this.reverseStep(current)
+  }
+
+  storeStep() {
+    if (!window.localStorage) return
+    window.localStorage.setItem(`store-step-${this.name()}`, this.step)
+  }
+
+  removeStep() {
+    if (!window.localStorage) return
+    window.localStorage.removeItem(`store-step-${this.name()}`)
+  }
+
+  showSpinner() {
+    for (const child of this.children) {
+      child.hidden = true
+    }
+
+    document.getElementById('spinner').style.display = 'block'
+  }
+
+  removeSpinner() {
+    document.getElementById('spinner').style.display = 'none'
+
+    for (const child of this.children) {
+      child.hidden = false
+    }
+  }
+
+  retrieveStep() {
+    if (!window.localStorage) return
+    const step = window.localStorage.getItem(`store-step-${this.name()}`)
+    if (step === undefined || step === null) return
+    return parseInt(step)
+  }
+
+  async redoSteps(step) {
+    this.showSpinner()
+    const all = []
+    for (let i = 0; i <= step; i++) {
+      all.push(this.play(this.steps[i]))
+    }
+    await Promise.all(all)
+    this.removeSpinner()
+    
+    this.setSubstepClasses(step)
+  }
+  
+  setSubstepClasses(step) {
+    const substeps = this.querySelectorAll('.substep')
+    for (let i = 0; i <= step; i++) {
+      substeps[i].classList.add('substep-visible')
+      if (i === step) {
+        substeps[i].classList.add('substep-active')
+      }
+    }
   }
 
   play(step) {

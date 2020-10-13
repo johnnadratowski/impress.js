@@ -21,15 +21,19 @@
   </head>
 
   <body class="impress-not-supported">
+    <div id="spinner" style="z-index: 9999; display: none; position: fixed; height: 100%; width: 100%;">
+      <img
+        id="spinner-img"
+        style="width: 30%; margin: auto; position: absolute; top: 0; bottom: 0; left: 0; right: 0;"
+        src="./img/spinner.gif"
+      />
+    </div>
     <div class="fallback-message">
       <p>
-        Your browser <b>doesn't support the features required</b>, so you are
-        presented with a simplified version of this presentation.
+        Your browser <b>doesn't support the features required</b>, so you are presented with a simplified version of
+        this presentation.
       </p>
-      <p>
-        For the best experience please use the latest <b>Chrome</b>,
-        <b>Safari</b> or <b>Firefox</b> browser.
-      </p>
+      <p>For the best experience please use the latest <b>Chrome</b>, <b>Safari</b> or <b>Firefox</b> browser.</p>
     </div>
 
     <div id="impress" data-transition-duration="1000">
@@ -41,6 +45,9 @@
       <div class="step" data-x="2000" data-y="2000" data-z="2000">
         <p>hi</p>
       </div>
+      <div class="step" data-x="4000" data-y="4000" data-z="4000">
+        <p>bye</p>
+      </div>
     </div>
 
     <!-- <div id="impress-toolbar"></div> -->
@@ -48,15 +55,15 @@
 
     <script type="text/javascript" src="../../js/impress.js"></script>
     <script>
-      impress().init();
+      impress().init()
     </script>
     <script>
       document.write(
         '<script src="http://' +
-          (location.host || "localhost").split(":")[0] +
+          (location.host || 'localhost').split(':')[0] +
           ':35729/livereload.js?snipver=1"></' +
-          "script>"
-      );
+          'script>'
+      )
     </script>
   </body>
 </html>
