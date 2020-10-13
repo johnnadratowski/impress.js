@@ -228,8 +228,9 @@ class StepBase extends HTMLElement {
   /**
     * Create a new animation step for a single animation
     */
-  animeStep(target, props) {
-    return Object.assign({ targets: `${this.name()} ${target}`, autoplay: false }, props || {})
+  animeStep(targets, props) {
+    if (typeof targets === 'string') targets = `${this.name()} ${targets}`
+    return Object.assign({ targets, autoplay: false }, props || {})
   }
 
   /**
