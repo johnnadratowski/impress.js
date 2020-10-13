@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.0/anime.min.js"
+      integrity="sha512-LfB+BcvR3zBt7ebVskhSWiSbEUiG3p5EcCprkieldsKhBeR6wpnLi0VpWC2GNgVGWP2n/skO8Bx2oKNjUhXCkw=="
+      crossorigin="anonymous"
+    ></script>
+  </head>
+
+  <body>
+    <img style="position: absolute; height: 200px; left: -2100px; top: 300px;" id="payload" src="./img/payload.png" />
+    <script>
+      const x = anime({
+        targets: '#payload',
+        left: '200px',
+        duration: 1000
+      })
+      x.play()
+
+      setTimeout(() => {
+        x.reverse()
+        x.play()
+      }, 1000)
+    </script>
+  </body>
+</html>
