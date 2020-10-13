@@ -25,6 +25,8 @@ class StepBase extends HTMLElement {
   }
 
   initialize() {
+    this.addEventListener('impress:substep:enter', this.doNext)
+    this.addEventListener('impress:substep:leave', this.doPrev)
     this.step = -1
     this.initialized = true
   }
@@ -36,6 +38,8 @@ class StepBase extends HTMLElement {
   }
 
   destroy() {
+    this.removeEventListener('impress:substep:enter', this.doNext)
+    this.removeEventListener('impress:substep:leave', this.doPrev)
     this.resetSteps()
     this.step = -1
     this.initialized = false
@@ -61,6 +65,7 @@ class StepBase extends HTMLElement {
 
   stepEnter(e) {
     console.log('STEP ENTER: ', e)
+    if (!e.target === this) return
     if (this.initialized) return
 
     this.initialize()
@@ -72,6 +77,7 @@ class StepBase extends HTMLElement {
 
   stepLeave(e) {
     console.log('STEP LEAVE: ', e)
+    if (!e.target === this) return
     if (!this.initialized) return
     this.destroy()
   }
@@ -86,7 +92,7 @@ class StepBase extends HTMLElement {
     const current = this.steps[this.step]
     if (!current) return
 
-    current.play()
+    this.play(current)
   }
 
   doPrev(e) {
@@ -98,10 +104,15 @@ class StepBase extends HTMLElement {
     this.step--
   }
 
+  play(step) {
+    step.play()
+    return step.finished
+  }
+
   reverseStep(step) {
     step.reverse()
     step.play()
-    step.finished.then(() => step.reverse())
+    return step.finished.then(() => step.reverse())
   }
 
   buildView() {
@@ -150,15 +161,11 @@ class StepBase extends HTMLElement {
 
   async connectedCallback() {
     if (!this.isConnected) return
-    this.addEventListener('impress:substep:enter', this.doNext)
-    this.addEventListener('impress:substep:leave', this.doPrev)
     this.addEventListener('impress:stepenter', this.stepEnter)
     this.addEventListener('impress:stepleave', this.stepLeave)
   }
 
   async disconnectedCallback() {
-    this.removeEventListener('impress:substep:enter', this.doNext)
-    this.removeEventListener('impress:substep:leave', this.doPrev)
     this.removeEventListener('impress:stepenter', this.stepEnter)
     this.removeEventListener('impress:stepleave', this.stepLeave)
   }

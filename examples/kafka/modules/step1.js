@@ -11,6 +11,8 @@ class Step1 extends StepBase {
     return `
       <img id="payload" src="./img/payload.png" />
       <img id="database" src="./img/database.png" />
+      <img id="email" src="./img/email.png" />
+      <img id="server" src="./img/server.png" />
     `
   }
 
@@ -24,31 +26,36 @@ class Step1 extends StepBase {
         })
       ),
 
-      () => {
-        debugger
-        const step = this.steps[0]
-        step.reverse()
-        step.play()
-      },
+      this.createDestAnim('database', '200px'),
 
-      anime
-        .timeline(this.animeStep('#database'), {
-          easing: 'easeInOutQuart'
-        })
-        .add({
-          top: '200px',
-          opacity: 1,
-          duration: 1000
-        })
-        .add({
-          top: '250px',
-          opacity: 0,
-          duration: 1000
-        })
+      this.createDestAnim('email', '170px'),
+
+      this.createDestAnim('server', '200px', false),
     ]
   }
 
+  createDestAnim(target, top, goAway = true) {
+    const t = anime
+        .timeline(this.animeStep('#' + target), {
+          easing: 'easeInOutQuart'
+        })
+        .add({
+          top,
+          opacity: 1,
+          duration: 1000
+        })
+    if (goAway) {
+        t.add({
+          top: '250px',
+          opacity: -0.1, // setting this to 0 causes a flicker
+          duration: 1000
+        })
+    }
+    return t
+  }
+
   styles() {
+
     return {
       '#payload': {
         height: '275px',
@@ -58,6 +65,20 @@ class Step1 extends StepBase {
         opacity: 0
       },
       '#database': {
+        height: '275px',
+        position: 'absolute',
+        left: '450px',
+        top: '150px',
+        opacity: 0
+      },
+      '#email': {
+        height: '375px',
+        position: 'absolute',
+        left: '450px',
+        top: '150px',
+        opacity: 0
+      },
+      '#server': {
         height: '275px',
         position: 'absolute',
         left: '450px',
