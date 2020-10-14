@@ -121,7 +121,7 @@ class StepBase extends HTMLElement {
 
     this.step--
     this.storeStep()
-    await this.reverseStep(current) // reverse animation on backwards
+    await this.reverse(current) // reverse animation on backwards
   }
 
   storeStep() {
@@ -165,7 +165,7 @@ class StepBase extends HTMLElement {
     this.showSpinner()
     for (let i = 0; i <= step; i++) {
       const current = this.buildNewStep(i)
-      current.seek(current.duration)
+      this.seek(current)
     }
     this.removeSpinner()
     
@@ -189,7 +189,7 @@ class StepBase extends HTMLElement {
   /**
     * async/await play step
     */
-  play(step) {
+  async play(step) {
     step.play()
     return step.finished
   }
@@ -197,10 +197,16 @@ class StepBase extends HTMLElement {
   /**
     * async/await play reverse step
     */
-  async reverseStep(step) {
+  async reverse(step) {
     step.reverse()
     step.play()
-    return step.finished.then(() => step.reverse())
+    if (step.finished) {
+      return step.finished.then(() => step.reverse())
+    }
+  }
+
+  seek(step) {
+    step.seek(step.duration)
   }
 
   buildView() {
