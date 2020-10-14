@@ -36,7 +36,7 @@ class Step1 extends StepBase {
         height: '375px',
         position: 'absolute',
         left: '450px',
-        top: '150px',
+        top: '100px',
         opacity: 0
       },
       '#server': {
@@ -61,7 +61,7 @@ class Step1 extends StepBase {
 
       this.createDestAnim('database', '200px'),
 
-      this.createDestAnim('email', '170px'),
+      this.createDestAnim('email', '150px'),
 
       this.createDestAnim('server', '200px', false),
 
@@ -86,9 +86,9 @@ class Step1 extends StepBase {
 
   createDestAnim(target, top, goAway = true) {
     const t = anime
-        .timeline(this.animeStep('#' + target), {
-          easing: 'easeInOutQuart'
-        })
+        .timeline(this.animeStep('#' + target, {
+          easing: 'easeInOutQuint' 
+        }))
         .add({
           top,
           opacity: 1,
