@@ -57,7 +57,10 @@ class StepBase extends HTMLElement {
   buildStep(i) {
     if (i === undefined || i === null) i = this.step
     let current = this.substeps()[i]
-    // Allow for functions which can take a 'play', 'reverse', 'reset'
+    // Allow for string which will just grab the animation as a property
+    if (typeof current === 'string') current = this[current]
+
+    // Allow for a "builder" function, useful for building timelines
     if (typeof current === 'function' && !current.play) {
       current = current()
     }
