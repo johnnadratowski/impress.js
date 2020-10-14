@@ -49,11 +49,11 @@ class Step1 extends StepBase {
       },
       '#to-server-arrow': {
         height: '100px',
+        width: 0,
         position: 'absolute',
         left: '255px',
         top: '280px',
-        transform: 'rotate(180deg)',
-        opacity: 0
+        transform: 'rotate(180deg)'
       }
     }
   }
@@ -105,8 +105,8 @@ class Step1 extends StepBase {
   }
 
   arrow = this.animeStep('#to-server-arrow', {
-          opacity: 1,
-          duration: 1,
+          width: 205,
+          duration: 300,
           easing: 'linear'
         })
 
@@ -141,6 +141,11 @@ class Step1 extends StepBase {
           scale: {
             value: 0.2,
             duration: 2000,
+          },
+          width: {
+            value: 360,
+            duration: 1000,
+            delay: 1000
           },
           left: {
             value: 340,
