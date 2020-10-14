@@ -48,11 +48,11 @@ class Step1 extends StepBase {
         opacity: 0
       },
       '#to-server-arrow': {
-        height: '175px',
+        height: '100px',
         position: 'absolute',
-        left: '320px',
-        top: '250px',
-        transform: 'rotate(180deg) scale(0.2)',
+        left: '255px',
+        top: '280px',
+        transform: 'rotate(180deg)',
         opacity: 0
       }
     }
@@ -67,6 +67,8 @@ class Step1 extends StepBase {
       () => this.createDestAnim('email', '150px'),
 
       () => this.createDestAnim('server', '200px', false),
+
+      'arrow',
 
       'zoomOut',
 
@@ -102,6 +104,12 @@ class Step1 extends StepBase {
     return t
   }
 
+  arrow = this.animeStep('#to-server-arrow', {
+          opacity: 1,
+          duration: 1,
+          easing: 'linear'
+        })
+
   zoomOut = () => {
     return anime
       .timeline()
@@ -119,7 +127,7 @@ class Step1 extends StepBase {
             duration: 2000
           },
           left: {
-            value: 300,
+            value: 340,
             duration: 1000,
             delay: 1000
           },
@@ -130,10 +138,28 @@ class Step1 extends StepBase {
       )
       .add(
         this.animeStep('#to-server-arrow', {
-          opacity: 1,
-          duration: 1,
-          easing: 'linear'
-        })
+          scale: {
+            value: 0.2,
+            duration: 2000,
+          },
+          left: {
+            value: 340,
+            duration: 1000,
+            delay: 1000
+          },
+          top: {
+            value: 250,
+            duration: 1000,
+            delay: 1000
+          },
+          height: {
+            value: 175,
+            duration: 1000,
+            delay: 1000
+          },
+          easing: 'easeInSine'
+        }),
+        0
       )
   }
 
