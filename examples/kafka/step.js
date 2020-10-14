@@ -3,6 +3,8 @@ class StepBase extends HTMLElement {
     super()
   }
 
+  static current = null
+
   static register(step) {
     const s = Object.create(step.prototype)
     customElements.define(s.name(), step)
@@ -25,10 +27,39 @@ class StepBase extends HTMLElement {
   }
 
   initialize() {
+    if (this.initialized) return
     this.addEventListener('impress:substep:enter', this.doNext)
     this.addEventListener('impress:substep:leave', this.doPrev)
     this.step = this.step === undefined ? -1 : this.step // Never before seen step starts @ -1
     this.initialized = true
+
+    if (this.step === -1) {
+      // If this step never visited before, build view & step animations
+      this.buildView()
+      this.setStyles()
+
+      const step = this.retrieveStep()
+      if (step) {
+        this.step = step
+        this.redoSteps(step)
+      }
+    } else {
+      // If step visited before, just ensure proper state with impress.js
+      this.storeStep()
+    }
+
+    setTimeout(() => this.setSubstepClasses(this.step), 0)
+  }
+
+  destroy() {
+    if (!this.initialized) return
+    this.removeEventListener('impress:substep:enter', this.doNext)
+    this.removeEventListener('impress:substep:leave', this.doPrev)
+    // TODO: allow resets?
+    // this.resetSteps() // This was used to reset all animations after leaving the step
+    // this.step = -1    // All animations now keep state between steps, leaving for posterity
+    this.initialized = false
+    this.removeStep()
   }
 
   // TODO: allow resets?
@@ -37,15 +68,6 @@ class StepBase extends HTMLElement {
   //     this.steps[i].reset()
   //   }
   // }
-
-  destroy() {
-    this.removeEventListener('impress:substep:enter', this.doNext)
-    this.removeEventListener('impress:substep:leave', this.doPrev)
-    // TODO: allow resets?
-    // this.resetSteps() // This was used to reset all animations after leaving the step
-    // this.step = -1    // All animations now keep state between steps, leaving for posterity
-    this.initialized = false
-  }
 
   buildNewStep(i) {
     if (i === undefined || i === null) i = this.step
@@ -78,38 +100,6 @@ class StepBase extends HTMLElement {
     current.leaveStep = leaveStep
     current.startStep = startStep
     return current
-  }
-
-  stepEnter(e) {
-    console.log('STEP ENTER: ', e)
-    if (!e.target === this) return // Do not do anything if this isn't the current step
-    if (this.initialized) return
-
-    this.initialize()
-    if (this.step === -1) {
-      // If this step never visited before, build view & step animations
-      this.buildView()
-      this.setStyles()
-
-      const step = this.retrieveStep()
-      if (step) {
-        this.step = step
-        this.redoSteps(step)
-      }
-    } else {
-      // If step visited before, just ensure proper state with impress.js
-      this.storeStep()
-    }
-
-    setTimeout(() => this.setSubstepClasses(this.step), 0)
-  }
-
-  stepLeave(e) {
-    console.log('STEP LEAVE: ', e)
-    if (!e.target === this) return // Do not do anything if this isn't the current step
-    if (!this.initialized) return
-    this.destroy()
-    this.removeStep()
   }
 
   async doNext(e) {
@@ -223,18 +213,20 @@ class StepBase extends HTMLElement {
    * async/await play step
    */
   async play(step) {
+    StepBase.animating = true
     step.play()
-    return step.finished
+    return step.finished.then(() => (StepBase.animating = false))
   }
 
   /**
    * async/await play reverse step
    */
   async reverse(step) {
+    StepBase.animating = true
     step.reverse()
     step.play()
     if (step.finished) {
-      return step.finished.then(() => step.reverse())
+      return step.finished.then(() => step.reverse()).then(() => (StepBase.animating = false))
     }
   }
 
@@ -270,39 +262,25 @@ class StepBase extends HTMLElement {
     if (typeof targets === 'string') targets = `${this.name()} ${targets}`
     return Object.assign({ targets, autoplay: false, leaveStep, startStep }, props || {})
   }
+}
 
-  /**
-   * Create a new animation step for multiple animations at once
-   * NOTE: to do sequential animations at once, consider anime's timeline feature
-   */
-  // animeMultiStep(targets, props) {
-  //   const all = []
-  //   for (let i = 0; i < props.length; i++) {
-  //     const target = Array.isArray(targets) ? targets[i] : targets
-  //     all.push(anime(this.animeStep(target, props[i])))
-  //   }
-
-  //   return {
-  //     play() {
-  //       all.forEach((a) => a.play())
-  //     },
-  //     reverse() {
-  //       all.forEach((a) => this.reverseStep(a))
-  //     },
-  //     reset() {
-  //       all.forEach((a) => a.reset())
-  //     }
-  //   }
-  // }
-
-  async connectedCallback() {
-    if (!this.isConnected) return
-    this.addEventListener('impress:stepenter', this.stepEnter)
-    this.addEventListener('impress:stepleave', this.stepLeave)
-  }
-
-  async disconnectedCallback() {
-    this.removeEventListener('impress:stepenter', this.stepEnter)
-    this.removeEventListener('impress:stepleave', this.stepLeave)
+function stepEnter(e) {
+  console.log('STEP ENTER: ', e)
+  if (e.target && e.target.initialize) {
+    e.target.initialize()
+    StepBase.current = e.target
+  } else {
+    StepBase.current = null
   }
 }
+
+function stepLeave(e) {
+  console.log('STEP LEAVE: ', e)
+  if (e.target && e.target.destroy) {
+    e.target.destroy()
+  }
+  StepBase.current = null
+}
+
+document.addEventListener('impress:stepenter', stepEnter)
+document.addEventListener('impress:stepleave', stepLeave)
