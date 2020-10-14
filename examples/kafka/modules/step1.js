@@ -105,10 +105,10 @@ class Step1 extends StepBase {
   }
 
   arrow = this.animeStep('#to-server-arrow', {
-          width: 205,
-          duration: 300,
-          easing: 'linear'
-        })
+    width: 205,
+    duration: 300,
+    easing: 'linear'
+  })
 
   zoomOut = () => {
     return anime
@@ -140,7 +140,7 @@ class Step1 extends StepBase {
         this.animeStep('#to-server-arrow', {
           scale: {
             value: 0.2,
-            duration: 2000,
+            duration: 2000
           },
           width: {
             value: 360,
@@ -172,7 +172,7 @@ class Step1 extends StepBase {
     if (this.querySelectorAll('.payload-clone').length) return // Don't need to create payload clones again
 
     const payload = this.querySelector('#payload')
-    
+
     const rows = 13
     const columns = 20
     const colSize = 50
@@ -189,11 +189,11 @@ class Step1 extends StepBase {
 
       newPayload.style.opacity = 1
       newPayload.style.transform += ' scale(0.0)'
-      const left = Math.floor(payloadLeft - (column * colSize))
-      const top = Math.floor(row > rowSplit ? payloadTop - ((row - rowSplit) * rowSize) : payloadTop + (row * rowSize))
+      const left = Math.floor(payloadLeft - column * colSize)
+      const top = Math.floor(row > rowSplit ? payloadTop - (row - rowSplit) * rowSize : payloadTop + row * rowSize)
       newPayload.style.left = `${left}px`
       newPayload.style.top = `${top}px`
-      
+
       this.appendChild(newPayload)
     }
   }
@@ -201,25 +201,27 @@ class Step1 extends StepBase {
   multiplyPayload = () => {
     this.createPayloadClones()
 
-    const a = anime(this.animeStep('.payload-clone', { 
-      opacity: 1,
-      scale: 0.2,
-      rotate: 720,
-      duration: 1000,
-      delay: anime.stagger([1, 1000]),
-      easing: 'linear'
-    }))
+    const a = anime(
+      this.animeStep('.payload-clone', {
+        opacity: 1,
+        scale: 0.2,
+        rotate: 720,
+        duration: 1000,
+        delay: anime.stagger([1, 1000]),
+        easing: 'linear'
+      })
+    )
 
     return {
-      play: () => {
+      play: async () => {
         return this.play(a)
       },
       reverse: async () => {
         await this.reverse(a)
-        this.querySelectorAll('.payload-clone').forEach(c => c.remove())
+        this.querySelectorAll('.payload-clone').forEach((c) => c.remove())
       },
-      seek: () => {
-        return this.seek(a)
+      seek: (to) => {
+        return this.seek(a, to)
       }
     }
   }

@@ -5,6 +5,8 @@ class StepBase extends HTMLElement {
 
   static current = null
 
+  static animating = false
+
   static register(step) {
     const s = Object.create(step.prototype)
     customElements.define(s.name(), step)
@@ -82,6 +84,12 @@ class StepBase extends HTMLElement {
     }
   }
 
+  previousStep() {
+    if (this.steps && this.steps[this.step + 1]) {
+      return this.steps[this.step]
+    }
+  }
+
   buildStep(i) {
     if (i === undefined || i === null) i = this.step
     let current = this.substeps()[i]
@@ -139,7 +147,7 @@ class StepBase extends HTMLElement {
     this.step--
     this.storeStep()
 
-    const next = this.currentStep()
+    const next = this.currentStep() || this.buildNewStep()
     if (next && next.startStep) {
       next.startStep(next, true)
     }
@@ -214,8 +222,15 @@ class StepBase extends HTMLElement {
    */
   async play(step) {
     StepBase.animating = true
-    step.play()
-    return step.finished.then(() => (StepBase.animating = false))
+    if (step.finished) {
+      // anime object promises
+      step.play()
+      return step.finished.then(() => (StepBase.animating = false))
+    } else {
+      // objects implementing play/reverse/seek
+      await step.play()
+      StepBase.animating = false
+    }
   }
 
   /**
@@ -223,15 +238,21 @@ class StepBase extends HTMLElement {
    */
   async reverse(step) {
     StepBase.animating = true
-    step.reverse()
-    step.play()
     if (step.finished) {
+      step.reverse()
+      step.play()
       return step.finished.then(() => step.reverse()).then(() => (StepBase.animating = false))
+    } else {
+      // objects implementing play/reverse/seek
+      await step.reverse()
+      StepBase.animating = false
     }
   }
 
-  seek(step) {
-    step.seek(step.duration)
+  seek(step, to) {
+    to = to === undefined ? step.duration : to
+    step.seek(to)
+    StepBase.animating = false
   }
 
   buildView() {
@@ -264,23 +285,57 @@ class StepBase extends HTMLElement {
   }
 }
 
-function stepEnter(e) {
+document.addEventListener('impress:stepenter', (e) => {
   console.log('STEP ENTER: ', e)
+
   if (e.target && e.target.initialize) {
     e.target.initialize()
     StepBase.current = e.target
   } else {
     StepBase.current = null
   }
-}
+})
 
-function stepLeave(e) {
+document.addEventListener('impress:stepleave', (e) => {
   console.log('STEP LEAVE: ', e)
   if (e.target && e.target.destroy) {
     e.target.destroy()
   }
   StepBase.current = null
-}
+})
 
-document.addEventListener('impress:stepenter', stepEnter)
-document.addEventListener('impress:stepleave', stepLeave)
+document.addEventListener('keydown', (e) => {
+  console.log('keydown', StepBase.animating)
+  if (StepBase.current && StepBase.animating) {
+    e.preventDefault()
+    e.stopImmediatePropagation()
+    return false
+  }
+})
+
+document.addEventListener('keyup', (e) => {
+  console.log('keyup', StepBase.animating)
+  if (StepBase.current && StepBase.animating) {
+    switch (e.code) {
+      case 'ArrowRight':
+      case 'Space':
+      case 'Tab':
+        const current = StepBase.current.currentStep()
+        if (current) {
+          StepBase.current.seek(current)
+        }
+        break
+      // case 'ArrowLeft':
+      //   const previous = StepBase.current.currentStep()
+      //   if (previous) {
+      //     StepBase.seeking = true
+      //     StepBase.current.seek(previous, 0)
+      //     StepBase.seeking = false
+      //   }
+      //   break
+    }
+    e.preventDefault()
+    e.stopImmediatePropagation()
+    return false
+  }
+})
