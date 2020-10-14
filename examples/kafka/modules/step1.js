@@ -64,6 +64,23 @@ class Step1 extends StepBase {
       this.createDestAnim('email', '170px'),
 
       this.createDestAnim('server', '200px', false),
+
+      anime(
+        this.animeStep('*', {
+          scale: .5,
+          duration: 1000,
+          easing: 'linear'
+        })
+      ),
+
+      anime(
+        this.animeStep('*', {
+          scale: .2,
+          duration: 1000,
+          easing: 'linear'
+        })
+      ),
+
     ]
   }
 
