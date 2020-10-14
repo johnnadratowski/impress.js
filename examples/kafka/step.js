@@ -54,6 +54,12 @@ class StepBase extends HTMLElement {
     return this.steps[i]
   }
 
+  currentStep() {
+    if (this.steps && this.steps[this.step]) {
+      return this.steps[this.step]
+    }
+  }
+
   buildStep(i) {
     if (i === undefined || i === null) i = this.step
     let current = this.substeps()[i]
@@ -64,7 +70,14 @@ class StepBase extends HTMLElement {
     if (typeof current === 'function' && !current.play) {
       current = current()
     }
-    return current.play ? current : anime(current)
+
+    // If start/leaveStep is on an animation object, attach it to the anime object
+    const leaveStep = current.leaveStep
+    const startStep = current.startStep
+    current = current.play ? current : anime(current)
+    current.leaveStep = leaveStep
+    current.startStep = startStep
+    return current
   }
 
   stepEnter(e) {
@@ -73,7 +86,8 @@ class StepBase extends HTMLElement {
     if (this.initialized) return
 
     this.initialize()
-    if (this.step === -1) {  // If this step never visited before, build view & step animations
+    if (this.step === -1) {
+      // If this step never visited before, build view & step animations
       this.buildView()
       this.setStyles()
 
@@ -82,7 +96,8 @@ class StepBase extends HTMLElement {
         this.step = step
         this.redoSteps(step)
       }
-    } else {                 // If step visited before, just ensure proper state with impress.js
+    } else {
+      // If step visited before, just ensure proper state with impress.js
       this.storeStep()
     }
 
@@ -100,27 +115,45 @@ class StepBase extends HTMLElement {
   async doNext(e) {
     console.log('NEXT SUBSTEP: ', e)
     if (this.step + 1 >= this.substeps().length) {
-      console.error("INVALID SUBSTEP DETECTED")
+      console.error('INVALID SUBSTEP DETECTED')
       return
     }
-    this.step++
-    
-    await this.play(this.buildNewStep())
+    const prev = this.currentStep()
+    if (prev && prev.leaveStep) {
+      prev.leaveStep(prev, false)
+    }
 
+    this.step++
     this.storeStep()
+
+    const current = this.buildNewStep()
+    if (current && current.startStep) {
+      current.startStep(current, false)
+    }
+
+    await this.play(current)
   }
 
   async doPrev(e) {
     console.log('PREV SUBSTEP: ', e)
     if (!this.steps > 0) {
-      console.error("INVALID SUBSTEP DETECTED")
+      console.error('INVALID SUBSTEP DETECTED')
       return
     }
 
-    const current = this.steps[this.step]
+    const current = this.currentStep()
+    if (current && current.leaveStep) {
+      current.leaveStep(current, true)
+    }
 
     this.step--
     this.storeStep()
+
+    const next = this.currentStep()
+    if (next && next.startStep) {
+      next.startStep(next, true)
+    }
+
     await this.reverse(current) // reverse animation on backwards
   }
 
@@ -158,9 +191,9 @@ class StepBase extends HTMLElement {
   }
 
   /**
-    * This is used to load up a steps state from localstorage
-    * Replays the animations and syncs substep state with impress.js
-    */
+   * This is used to load up a steps state from localstorage
+   * Replays the animations and syncs substep state with impress.js
+   */
   redoSteps(step) {
     this.showSpinner()
     for (let i = 0; i <= step; i++) {
@@ -168,14 +201,14 @@ class StepBase extends HTMLElement {
       this.seek(current)
     }
     this.removeSpinner()
-    
+
     this.setSubstepClasses(step)
   }
-  
+
   /**
-    * Impress.js keep substep state as classes on elems.
-    * Make sure it has the proper state: https://github.com/impress/impress.js/tree/master/src/plugins/substep
-    */
+   * Impress.js keep substep state as classes on elems.
+   * Make sure it has the proper state: https://github.com/impress/impress.js/tree/master/src/plugins/substep
+   */
   setSubstepClasses(step) {
     const substeps = this.querySelectorAll('.substep')
     for (let i = 0; i <= step; i++) {
@@ -187,16 +220,16 @@ class StepBase extends HTMLElement {
   }
 
   /**
-    * async/await play step
-    */
+   * async/await play step
+   */
   async play(step) {
     step.play()
     return step.finished
   }
 
   /**
-    * async/await play reverse step
-    */
+   * async/await play reverse step
+   */
   async reverse(step) {
     step.reverse()
     step.play()
@@ -231,17 +264,17 @@ class StepBase extends HTMLElement {
   }
 
   /**
-    * Create a new animation step for a single animation
-    */
-  animeStep(targets, props) {
+   * Create a new animation step for a single animation
+   */
+  animeStep(targets, props, leaveStep, startStep) {
     if (typeof targets === 'string') targets = `${this.name()} ${targets}`
-    return Object.assign({ targets, autoplay: false }, props || {})
+    return Object.assign({ targets, autoplay: false, leaveStep, startStep }, props || {})
   }
 
   /**
-    * Create a new animation step for multiple animations at once
-    * NOTE: to do sequential animations at once, consider anime's timeline feature
-    */
+   * Create a new animation step for multiple animations at once
+   * NOTE: to do sequential animations at once, consider anime's timeline feature
+   */
   // animeMultiStep(targets, props) {
   //   const all = []
   //   for (let i = 0; i < props.length; i++) {
