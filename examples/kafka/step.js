@@ -31,34 +31,35 @@ class StepBase extends HTMLElement {
     this.initialized = true
   }
 
-  resetSteps() {
-    for (let i = this.step; i >= 0; i--) {
-      this.steps[i].reset()
-    }
-  }
+  // TODO: allow resets?
+  // resetSteps() {
+  //   for (let i = this.step; i >= 0; i--) {
+  //     this.steps[i].reset()
+  //   }
+  // }
 
   destroy() {
     this.removeEventListener('impress:substep:enter', this.doNext)
     this.removeEventListener('impress:substep:leave', this.doPrev)
+    // TODO: allow resets?
     // this.resetSteps() // This was used to reset all animations after leaving the step
     // this.step = -1    // All animations now keep state between steps, leaving for posterity
     this.initialized = false
   }
 
-  buildStep(current) {
+  buildNewStep(i) {
+    if (i === undefined || i === null) i = this.step
+    if (!this.steps) this.steps = []
+    this.steps[i] = this.buildStep(i)
+    return this.steps[i]
+  }
+
+  buildStep(i) {
+    if (i === undefined || i === null) i = this.step
+    let current = this.substeps()[i]
     // Allow for functions which can take a 'play', 'reverse', 'reset'
     if (typeof current === 'function' && !current.play) {
-      return {
-        play() {
-          current('play')
-        },
-        reverse() {
-          current('reverse')
-        },
-        reset() {
-          current('reset')
-        }
-      }
+      current = current()
     }
     return current.play ? current : anime(current)
   }
@@ -73,17 +74,16 @@ class StepBase extends HTMLElement {
       this.buildView()
       this.setStyles()
 
-      this.steps = this.substeps().map(this.buildStep)
-
       const step = this.retrieveStep()
       if (step) {
         this.step = step
         this.redoSteps(step)
       }
     } else {                 // If step visited before, just ensure proper state with impress.js
-      setTimeout(() => this.setSubstepClasses(this.step), 0)
       this.storeStep()
     }
+
+    setTimeout(() => this.setSubstepClasses(this.step), 0)
   }
 
   stepLeave(e) {
@@ -96,16 +96,13 @@ class StepBase extends HTMLElement {
 
   async doNext(e) {
     console.log('NEXT SUBSTEP: ', e)
-    if (this.step + 1 >= this.steps.length) {
+    if (this.step + 1 >= this.substeps().length) {
       console.error("INVALID SUBSTEP DETECTED")
       return
     }
     this.step++
-
-    const current = this.steps[this.step]
-    if (!current) return
-
-    await this.play(current)
+    
+    await this.play(this.buildNewStep())
 
     this.storeStep()
   }
@@ -161,13 +158,12 @@ class StepBase extends HTMLElement {
     * This is used to load up a steps state from localstorage
     * Replays the animations and syncs substep state with impress.js
     */
-  async redoSteps(step) {
+  redoSteps(step) {
     this.showSpinner()
-    const all = []
     for (let i = 0; i <= step; i++) {
-      all.push(this.play(this.steps[i]))
+      const current = this.buildNewStep(i)
+      current.seek(current.duration)
     }
-    await Promise.all(all)
     this.removeSpinner()
     
     this.setSubstepClasses(step)
@@ -237,25 +233,25 @@ class StepBase extends HTMLElement {
     * Create a new animation step for multiple animations at once
     * NOTE: to do sequential animations at once, consider anime's timeline feature
     */
-  animeMultiStep(targets, props) {
-    const all = []
-    for (let i = 0; i < props.length; i++) {
-      const target = Array.isArray(targets) ? targets[i] : targets
-      all.push(anime(this.animeStep(target, props[i])))
-    }
+  // animeMultiStep(targets, props) {
+  //   const all = []
+  //   for (let i = 0; i < props.length; i++) {
+  //     const target = Array.isArray(targets) ? targets[i] : targets
+  //     all.push(anime(this.animeStep(target, props[i])))
+  //   }
 
-    return {
-      play() {
-        all.forEach((a) => a.play())
-      },
-      reverse() {
-        all.forEach((a) => this.reverseStep(a))
-      },
-      reset() {
-        all.forEach((a) => a.reset())
-      }
-    }
-  }
+  //   return {
+  //     play() {
+  //       all.forEach((a) => a.play())
+  //     },
+  //     reverse() {
+  //       all.forEach((a) => this.reverseStep(a))
+  //     },
+  //     reset() {
+  //       all.forEach((a) => a.reset())
+  //     }
+  //   }
+  // }
 
   async connectedCallback() {
     if (!this.isConnected) return

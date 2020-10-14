@@ -51,35 +51,29 @@ class Step1 extends StepBase {
 
   substeps() {
     return [
-      anime(
-        this.animeStep('#payload', {
-          left: '0px',
-          opacity: 1,
-          duration: 1000
-        })
-      ),
+      this.animeStep('#payload', {
+        left: '0px',
+        opacity: 1,
+        duration: 1000
+      }),
 
-      this.createDestAnim('database', '200px'),
+      () => this.createDestAnim('database', '200px'),
 
-      this.createDestAnim('email', '150px'),
+      () => this.createDestAnim('email', '150px'),
 
-      this.createDestAnim('server', '200px', false),
+      () => this.createDestAnim('server', '200px', false),
 
-      anime(
-        this.animeStep('*', {
-          scale: .5,
-          duration: 1000,
-          easing: 'linear'
-        })
-      ),
+      this.animeStep('*', {
+        scale: .5,
+        duration: 1000,
+        easing: 'linear'
+      }),
 
-      anime(
-        this.animeStep('*', {
-          scale: .2,
-          duration: 1000,
-          easing: 'linear'
-        })
-      ),
+      this.animeStep('*', {
+        scale: .2,
+        duration: 1000,
+        easing: 'linear'
+      })
 
     ]
   }
