@@ -111,7 +111,12 @@ class StepBase extends HTMLElement {
     const endPlayStep = current.endPlayStep
     const startReverseStep = current.startReverseStep
     const endReverseStep = current.endReverseStep
-    current = current.play ? current : anime(current)
+
+    if (current.anime) {
+      current = typeof current.anime === 'function' ? current.anime() : current.anime
+    } else {
+      current = current.play ? current : anime(current)
+    }
     current.leaveStep = leaveStep
     current.startPlayStep = startPlayStep
     current.endPlayStep = endPlayStep
@@ -322,7 +327,6 @@ document.addEventListener('impress:stepleave', (e) => {
 })
 
 document.addEventListener('keydown', (e) => {
-  console.log('keydown', StepBase.animating)
   if (StepBase.current && StepBase.animating) {
     e.preventDefault()
     e.stopImmediatePropagation()
@@ -331,7 +335,6 @@ document.addEventListener('keydown', (e) => {
 })
 
 document.addEventListener('keyup', (e) => {
-  console.log('keyup', StepBase.animating)
   if (StepBase.current && StepBase.animating) {
     switch (e.code) {
       case 'ArrowRight':
