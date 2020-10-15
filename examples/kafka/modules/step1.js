@@ -168,7 +168,7 @@ class Step1 extends StepBase {
       )
   }
 
-  createPayloadClones() {
+  createPayloadClones = () => {
     if (this.querySelectorAll('.payload-clone').length) return // Don't need to create payload clones again
 
     const payload = this.querySelector('#payload')
@@ -198,33 +198,23 @@ class Step1 extends StepBase {
     }
   }
 
-  multiplyPayload = () => {
-    this.createPayloadClones()
+  deletePayloadClones = () => this.querySelectorAll('.payload-clone').forEach((c) => c.remove())
 
-    const a = anime(
-      this.animeStep('.payload-clone', {
-        opacity: 1,
-        scale: 0.2,
-        rotate: 720,
-        duration: 1000,
-        delay: anime.stagger([1, 1000]),
-        easing: 'linear'
-      })
-    )
-
-    return {
-      play: async () => {
-        return this.play(a)
-      },
-      reverse: async () => {
-        await this.reverse(a)
-        this.querySelectorAll('.payload-clone').forEach((c) => c.remove())
-      },
-      seek: (to) => {
-        return this.seek(a, to)
-      }
+  multiplyPayload = this.animeStep(
+    '.payload-clone',
+    {
+      opacity: 1,
+      scale: 0.2,
+      rotate: 720,
+      duration: 1000,
+      delay: anime.stagger([1, 1000]),
+      easing: 'linear'
+    },
+    {
+      enterStep: this.createPayloadClones,
+      endReverseStep: this.deletePayloadClones
     }
-  }
+  )
 }
 
 StepBase.register(Step1)

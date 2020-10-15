@@ -101,14 +101,22 @@ class StepBase extends HTMLElement {
       current = current()
     }
 
+    if (current.enterStep) {
+      current.enterStep()
+    }
+
     // If start/end/leaveStep is on an animation object, attach it to the anime object
     const leaveStep = current.leaveStep
-    const startStep = current.startStep
-    const endStep = current.endStep
+    const startPlayStep = current.startPlayStep
+    const endPlayStep = current.endPlayStep
+    const startReverseStep = current.startReverseStep
+    const endReverseStep = current.endReverseStep
     current = current.play ? current : anime(current)
     current.leaveStep = leaveStep
-    current.startStep = startStep
-    current.endStep = endStep
+    current.startPlayStep = startPlayStep
+    current.endPlayStep = endPlayStep
+    current.startReverseStep = startReverseStep
+    current.endReverseStep = endReverseStep
     return current
   }
 
@@ -127,14 +135,14 @@ class StepBase extends HTMLElement {
     this.storeStep()
 
     const current = this.buildNewStep()
-    if (current && current.startStep) {
-      current.startStep(current, false)
+    if (current && current.startPlayStep) {
+      current.startPlayStep(current)
     }
 
     await this.play(current)
 
-    if (current && current.endStep) {
-      current.endStep(current, false)
+    if (current && current.endPlayStep) {
+      current.endPlayStep(current)
     }
   }
 
@@ -153,14 +161,14 @@ class StepBase extends HTMLElement {
     this.step--
     this.storeStep()
 
-    if (current && current.startStep) {
-      current.startStep(current, true)
+    if (current && current.startReverseStep) {
+      current.startReverseStep(current)
     }
 
     await this.reverse(current) // reverse animation on backwards
 
-    if (current && current.endStep) {
-      current.endStep(current, true)
+    if (current && current.endReverseStep) {
+      current.endReverseStep(current)
     }
   }
 
