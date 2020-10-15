@@ -110,62 +110,64 @@ class Step1 extends StepBase {
     easing: 'linear'
   })
 
-  zoomOut = () => {
-    return anime
-      .timeline()
-      .add(
-        this.animeStep('#server', {
-          scale: 0.2,
-          duration: 2000,
-          easing: 'linear'
-        })
-      )
-      .add(
-        this.animeStep('#payload', {
-          scale: {
-            value: 0.2,
+  zoomOut = {
+    anime: () =>
+      anime
+        .timeline()
+        .add(
+          this.animeStep('#server', {
+            scale: 0.2,
+            duration: 2000,
+            easing: 'linear'
+          })
+        )
+        .add(
+          this.animeStep('#payload', {
+            scale: {
+              value: 0.2,
+              duration: 2000
+            },
+            left: {
+              value: 340,
+              duration: 1000,
+              delay: 1000
+            },
+            easing: 'easeInSine',
             duration: 2000
-          },
-          left: {
-            value: 340,
-            duration: 1000,
-            delay: 1000
-          },
-          easing: 'easeInSine',
-          duration: 2000
-        }),
-        0
-      )
-      .add(
-        this.animeStep('#to-server-arrow', {
-          scale: {
-            value: 0.2,
-            duration: 2000
-          },
-          width: {
-            value: 360,
-            duration: 1000,
-            delay: 1000
-          },
-          left: {
-            value: 340,
-            duration: 1000,
-            delay: 1000
-          },
-          top: {
-            value: 250,
-            duration: 1000,
-            delay: 1000
-          },
-          height: {
-            value: 175,
-            duration: 1000,
-            delay: 1000
-          },
-          easing: 'easeInSine'
-        }),
-        0
-      )
+          }),
+          0
+        )
+        .add(
+          this.animeStep('#to-server-arrow', {
+            scale: {
+              value: 0.2,
+              duration: 2000
+            },
+            width: {
+              value: 360,
+              duration: 1000,
+              delay: 1000
+            },
+            left: {
+              value: 340,
+              duration: 1000,
+              delay: 1000
+            },
+            top: {
+              value: 250,
+              duration: 1000,
+              delay: 1000
+            },
+            height: {
+              value: 175,
+              duration: 1000,
+              delay: 1000
+            },
+            easing: 'easeInSine'
+          }),
+          0
+        ),
+    endPlayStep: () => setTimeout(StepBase.impress.next(), 0)
   }
 
   createPayloadClones = () => {

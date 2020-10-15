@@ -7,6 +7,8 @@ class StepBase extends HTMLElement {
 
   static animating = false
 
+  static impress = null
+
   static register(step) {
     const s = Object.create(step.prototype)
     customElements.define(s.name(), step)
@@ -306,6 +308,10 @@ class StepBase extends HTMLElement {
     return Object.assign({ targets, autoplay: false, ...events }, props || {})
   }
 }
+
+document.addEventListener('impress:init', (e, a) => {
+  StepBase.impress = e.detail.api
+})
 
 document.addEventListener('impress:stepenter', (e) => {
   console.log('STEP ENTER: ', e)
