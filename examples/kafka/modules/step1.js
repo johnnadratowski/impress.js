@@ -24,28 +24,28 @@ class Step1 extends StepBase {
         position: 'absolute',
         top: '200px',
         left: '-2100px',
-        opacity: 0
+        opacity: 0,
       },
       '#database': {
         height: '275px',
         position: 'absolute',
         left: '450px',
         top: '150px',
-        opacity: 0
+        opacity: 0,
       },
       '#email': {
         height: '375px',
         position: 'absolute',
         left: '450px',
         top: '100px',
-        opacity: 0
+        opacity: 0,
       },
       '#server': {
         height: '275px',
         position: 'absolute',
         left: '450px',
         top: '150px',
-        opacity: 0
+        opacity: 0,
       },
       '#to-server-arrow': {
         height: '100px',
@@ -53,8 +53,8 @@ class Step1 extends StepBase {
         position: 'absolute',
         left: '255px',
         top: '280px',
-        transform: 'rotate(180deg)'
-      }
+        transform: 'rotate(180deg)',
+      },
     }
   }
 
@@ -72,33 +72,33 @@ class Step1 extends StepBase {
 
       'zoomOut',
 
-      'multiplyPayload'
+      'multiplyPayload',
     ]
   }
 
   intro = this.animeStep('#payload', {
     left: '0px',
     opacity: 1,
-    duration: 1000
+    duration: 1000,
   })
 
   createDestAnim(target, top, goAway = true) {
     const t = anime
       .timeline(
         this.animeStep('#' + target, {
-          easing: 'easeInOutQuint'
+          easing: 'easeInOutQuint',
         })
       )
       .add({
         top,
         opacity: 1,
-        duration: 1000
+        duration: 1000,
       })
     if (goAway) {
       t.add({
         top: '250px',
         opacity: -0.1, // setting this to 0 causes a flicker
-        duration: 1000
+        duration: 1000,
       })
     }
     return t
@@ -107,7 +107,7 @@ class Step1 extends StepBase {
   arrow = this.animeStep('#to-server-arrow', {
     width: 205,
     duration: 300,
-    easing: 'linear'
+    easing: 'linear',
   })
 
   zoomOut = {
@@ -118,22 +118,22 @@ class Step1 extends StepBase {
           this.animeStep('#server', {
             scale: 0.2,
             duration: 2000,
-            easing: 'linear'
+            easing: 'linear',
           })
         )
         .add(
           this.animeStep('#payload', {
             scale: {
               value: 0.2,
-              duration: 2000
+              duration: 2000,
             },
             left: {
               value: 340,
               duration: 1000,
-              delay: 1000
+              delay: 1000,
             },
             easing: 'easeInSine',
-            duration: 2000
+            duration: 2000,
           }),
           0
         )
@@ -141,33 +141,33 @@ class Step1 extends StepBase {
           this.animeStep('#to-server-arrow', {
             scale: {
               value: 0.2,
-              duration: 2000
+              duration: 2000,
             },
             width: {
               value: 360,
               duration: 1000,
-              delay: 1000
+              delay: 1000,
             },
             left: {
               value: 340,
               duration: 1000,
-              delay: 1000
+              delay: 1000,
             },
             top: {
               value: 250,
               duration: 1000,
-              delay: 1000
+              delay: 1000,
             },
             height: {
               value: 175,
               duration: 1000,
-              delay: 1000
+              delay: 1000,
             },
-            easing: 'easeInSine'
+            easing: 'easeInSine',
           }),
           0
         ),
-    endPlayStep: () => setTimeout(StepBase.impress.next(), 0)
+    endPlayStep: () => setTimeout(StepBase.impress.next(), 0),
   }
 
   createPayloadClones = () => {
@@ -210,11 +210,12 @@ class Step1 extends StepBase {
       rotate: 720,
       duration: 1000,
       delay: anime.stagger([1, 1000]),
-      easing: 'linear'
+      easing: 'linear',
     },
     {
       enterStep: this.createPayloadClones,
-      endReverseStep: this.deletePayloadClones
+      endReverseStep: this.deletePayloadClones,
+      onReset: this.deletePayloadClones,
     }
   )
 }

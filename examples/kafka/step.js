@@ -16,6 +16,26 @@ class StepBase extends HTMLElement {
     customElements.define(s.name(), step)
   }
 
+  static gotoStep(step) {
+    if (typeof step === 'number') {
+      StepBase.impress.goto(step)
+    } else if (step === 'prev') {
+      if (StepBase.current) {
+        StepBase.current.resetSteps()
+      }
+      StepBase.impress.prev()
+    } else if (step === 'next') {
+      if (StepBase.current) {
+        StepBase.current.redoSteps()
+      }
+      StepBase.impress.next()
+    } else {
+      throw new Error(`Invalid step for goto: ${step}. Should be a number, 'next', or 'prev'`)
+    }
+    StepBase.animating = false
+    StepBase.current = null
+  }
+
   name() {
     throw new Error('must name element')
   }
@@ -46,7 +66,6 @@ class StepBase extends HTMLElement {
 
       const step = this.retrieveStep()
       if (step) {
-        this.step = step
         this.redoSteps(step)
       }
     } else {
@@ -66,10 +85,17 @@ class StepBase extends HTMLElement {
     this.removeStep()
   }
 
+  resetStep(step) {
+    const s = this.steps[step]
+    s.reset()
+    if (s.onReset) s.onReset()
+  }
+
   resetSteps() {
     for (let i = this.step; i >= 0; i--) {
-      this.steps[i].reset()
+      this.resetStep(i)
     }
+    this.steps = []
     this.step = -1
     this.removeSubstepClasses()
   }
@@ -114,6 +140,7 @@ class StepBase extends HTMLElement {
     const endPlayStep = current.endPlayStep
     const startReverseStep = current.startReverseStep
     const endReverseStep = current.endReverseStep
+    const onReset = current.onReset
 
     if (current.anime) {
       current = typeof current.anime === 'function' ? current.anime() : current.anime
@@ -125,6 +152,7 @@ class StepBase extends HTMLElement {
     current.endPlayStep = endPlayStep
     current.startReverseStep = startReverseStep
     current.endReverseStep = endReverseStep
+    current.onReset = onReset
     return current
   }
 
@@ -218,13 +246,16 @@ class StepBase extends HTMLElement {
    * Replays the animations and syncs substep state with impress.js
    */
   redoSteps(step) {
+    const from = step === undefined && this.step > -1 ? this.step + 1 : 0
+    step = step === undefined ? this.substeps().length - 1 : step
     this.showSpinner()
-    for (let i = 0; i <= step; i++) {
+    for (let i = from; i <= step; i++) {
       const current = this.buildNewStep(i)
       this.seek(current)
     }
     this.removeSpinner()
 
+    this.step = step
     this.setSubstepClasses(step)
   }
 
@@ -359,27 +390,26 @@ document.addEventListener('impress:stepleave', (e) => {
 })
 
 document.addEventListener('keydown', (e) => {
+  switch (e.code) {
+    case 'KeyR':
+    case 'KeyF':
+    case 'KeyB':
+    case 'KeyS':
+      return
+  }
+
   if (e.code === 'KeyR') return
   if (StepBase.current && StepBase.animating) {
-    e.preventDefault()
-    e.stopImmediatePropagation()
-    return false
+    return cancelThis(e)
   }
 })
 
+const cancelThis = (e) => {
+  e.preventDefault()
+  e.stopImmediatePropagation()
+  return false
+}
 document.addEventListener('keyup', (e) => {
-  switch (e.code) {
-    case 'KeyR':
-      if (window.localStorage) window.localStorage.clear()
-      StepBase.connectedSteps.forEach((s) => s.resetSteps())
-      StepBase.animating = false
-      StepBase.current = null
-      StepBase.impress.goto(0)
-      e.preventDefault()
-      e.stopImmediatePropagation()
-      return false
-  }
-
   if (StepBase.current && StepBase.animating) {
     switch (e.code) {
       case 'ArrowRight':
@@ -390,17 +420,24 @@ document.addEventListener('keyup', (e) => {
           StepBase.current.seek(current)
         }
         break
-      // case 'ArrowLeft':
-      //   const previous = StepBase.current.currentStep()
-      //   if (previous) {
-      //     StepBase.seeking = true
-      //     StepBase.current.seek(previous, 0)
-      //     StepBase.seeking = false
-      //   }
-      //   break
     }
-    e.preventDefault()
-    e.stopImmediatePropagation()
-    return false
+    return cancelThis(e)
+  }
+
+  switch (e.code) {
+    case 'KeyR':
+      if (window.localStorage) window.localStorage.clear()
+      StepBase.connectedSteps.forEach((s) => s.resetSteps())
+      StepBase.gotoStep(0)
+      return cancelThis(e)
+    case 'KeyF':
+      StepBase.gotoStep('next')
+      return cancelThis(e)
+    case 'KeyB':
+      StepBase.gotoStep('prev')
+      return cancelThis(e)
+    case 'KeyS':
+      if (StepBase.current) StepBase.current.resetSteps()
+      return cancelThis(e)
   }
 })
