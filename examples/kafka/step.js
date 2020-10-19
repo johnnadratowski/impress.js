@@ -9,6 +9,8 @@ class StepBase extends HTMLElement {
 
   static impress = null
 
+  static connectedSteps = []
+
   static register(step) {
     const s = Object.create(step.prototype)
     customElements.define(s.name(), step)
@@ -59,19 +61,18 @@ class StepBase extends HTMLElement {
     if (!this.initialized) return
     this.removeEventListener('impress:substep:enter', this.doNext)
     this.removeEventListener('impress:substep:leave', this.doPrev)
-    // TODO: allow resets?
-    // this.resetSteps() // This was used to reset all animations after leaving the step
     // this.step = -1    // All animations now keep state between steps, leaving for posterity
     this.initialized = false
     this.removeStep()
   }
 
-  // TODO: allow resets?
-  // resetSteps() {
-  //   for (let i = this.step; i >= 0; i--) {
-  //     this.steps[i].reset()
-  //   }
-  // }
+  resetSteps() {
+    for (let i = this.step; i >= 0; i--) {
+      this.steps[i].reset()
+    }
+    this.step = -1
+    this.removeSubstepClasses()
+  }
 
   buildNewStep(i) {
     if (i === undefined || i === null) i = this.step
@@ -231,6 +232,18 @@ class StepBase extends HTMLElement {
    * Impress.js keep substep state as classes on elems.
    * Make sure it has the proper state: https://github.com/impress/impress.js/tree/master/src/plugins/substep
    */
+  removeSubstepClasses(step) {
+    const substeps = this.querySelectorAll('.substep')
+    for (let i = 0; i < substeps.length; i++) {
+      substeps[i].classList.remove('substep-visible')
+      substeps[i].classList.remove('substep-active')
+    }
+  }
+
+  /**
+   * Impress.js keep substep state as classes on elems.
+   * Make sure it has the proper state: https://github.com/impress/impress.js/tree/master/src/plugins/substep
+   */
   setSubstepClasses(step) {
     const substeps = this.querySelectorAll('.substep')
     for (let i = 0; i <= step; i++) {
@@ -307,6 +320,19 @@ class StepBase extends HTMLElement {
     if (typeof targets === 'string') targets = `${this.name()} ${targets}`
     return Object.assign({ targets, autoplay: false, ...events }, props || {})
   }
+
+  connectedCallback() {
+    StepBase.connectedSteps.push(this)
+  }
+
+  disconnectedCallback() {
+    for (let i = 0; i < StepBase.connectedSteps; i++) {
+      if (this === StepBase.connectedSteps[i]) {
+        StepBase.connectedSteps.splice(i, 1)
+        break
+      }
+    }
+  }
 }
 
 document.addEventListener('impress:init', (e, a) => {
@@ -333,6 +359,7 @@ document.addEventListener('impress:stepleave', (e) => {
 })
 
 document.addEventListener('keydown', (e) => {
+  if (e.code === 'KeyR') return
   if (StepBase.current && StepBase.animating) {
     e.preventDefault()
     e.stopImmediatePropagation()
@@ -341,6 +368,18 @@ document.addEventListener('keydown', (e) => {
 })
 
 document.addEventListener('keyup', (e) => {
+  switch (e.code) {
+    case 'KeyR':
+      if (window.localStorage) window.localStorage.clear()
+      StepBase.connectedSteps.forEach((s) => s.resetSteps())
+      StepBase.animating = false
+      StepBase.current = null
+      StepBase.impress.goto(0)
+      e.preventDefault()
+      e.stopImmediatePropagation()
+      return false
+  }
+
   if (StepBase.current && StepBase.animating) {
     switch (e.code) {
       case 'ArrowRight':
