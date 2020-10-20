@@ -7,55 +7,77 @@ class Step1 extends StepBase {
     return 'step-1'
   }
 
-  view() {
-    return `
-      <img id="payload" src="./img/payload.png" />
-      <img id="database" src="./img/database.png" />
-      <img id="email" src="./img/email.png" />
-      <img id="server" src="./img/server.png" />
-      <img id="to-server-arrow" src="./img/left-arrow.png" />
-    `
-  }
-
-  styles() {
-    return {
-      '#payload': {
-        height: '275px',
-        position: 'absolute',
-        top: '200px',
-        left: '-2100px',
-        opacity: 0,
+  startSprites() {
+    return [
+      {
+        id: 'payload',
+        src: './img/payload.png',
+        styles: {
+          height: '275px',
+          position: 'absolute',
+          top: '200px',
+          left: '-2100px',
+          opacity: 0,
+        },
       },
-      '#database': {
-        height: '275px',
-        position: 'absolute',
-        left: '450px',
-        top: '150px',
-        opacity: 0,
+      {
+        id: 'database',
+        src: './img/database.png',
+        styles: {
+          height: '275px',
+          position: 'absolute',
+          left: '450px',
+          top: '150px',
+          opacity: 0,
+        },
       },
-      '#email': {
-        height: '375px',
-        position: 'absolute',
-        left: '450px',
-        top: '100px',
-        opacity: 0,
+      {
+        id: 'email',
+        src: './img/email.png',
+        styles: {
+          height: '375px',
+          position: 'absolute',
+          left: '450px',
+          top: '100px',
+          opacity: 0,
+        },
       },
-      '#server': {
-        height: '275px',
-        position: 'absolute',
-        left: '450px',
-        top: '150px',
-        opacity: 0,
+      {
+        id: 'server',
+        src: './img/server.png',
+        styles: {
+          height: '275px',
+          position: 'absolute',
+          left: '450px',
+          top: '150px',
+          opacity: 0,
+        },
       },
-      '#to-server-arrow': {
-        height: '100px',
-        width: 0,
-        position: 'absolute',
-        left: '255px',
-        top: '280px',
-        transform: 'rotate(180deg)',
+      {
+        id: 'to-server-arrow',
+        src: './img/left-arrow.png',
+        styles: {
+          height: '100px',
+          width: 0,
+          position: 'absolute',
+          left: '255px',
+          top: '280px',
+          transform: 'rotate(180deg)',
+        },
       },
-    }
+      {
+        id: 'tombstone',
+        src: './img/tombstone.png',
+        styles: {
+          height: '0px',
+          width: '70px',
+          position: 'absolute',
+          left: '585px',
+          bottom: '330px',
+          animation: 'linearwipe 1s steps(100, end)',
+        },
+      },
+    ]
   }
 
   substeps() {
@@ -73,6 +95,10 @@ class Step1 extends StepBase {
       'zoomOut',
 
       'multiplyPayload',
+
+      'deadServer',
+
+      'goAway',
     ]
   }
 
@@ -171,36 +197,18 @@ class Step1 extends StepBase {
   }
 
   createPayloadClones = () => {
-    if (this.querySelectorAll('.payload-clone').length) return // Don't need to create payload clones again
-
-    const payload = this.querySelector('#payload')
-
-    const rows = 13
-    const columns = 20
-    const colSize = 50
-    const rowSize = 70
-    const rowSplit = 6
-    const payloadTop = parseInt(payload.style.top)
-    const payloadLeft = parseInt(payload.style.left)
-    for (let i = 1; i < rows * columns; i++) {
-      const column = Math.floor(i / rows)
-      const row = i % rows
-
-      const newPayload = payload.cloneNode()
-      newPayload.classList.add('payload-clone')
-
-      newPayload.style.opacity = 1
-      newPayload.style.transform += ' scale(0.0)'
-      const left = Math.floor(payloadLeft - column * colSize)
-      const top = Math.floor(row > rowSplit ? payloadTop - (row - rowSplit) * rowSize : payloadTop + row * rowSize)
-      newPayload.style.left = `${left}px`
-      newPayload.style.top = `${top}px`
-
-      this.appendChild(newPayload)
-    }
+    this.cloneGrid(
+      'payload-clone',
+      '#payload',
+      20,
+      13,
+      50,
+      70,
+      { opacity: 1, transform: document.querySelector('#payload').style.transform + ' scale(0.0)' },
+      99,
+      6
+    )
   }
-
-  deletePayloadClones = () => this.querySelectorAll('.payload-clone').forEach((c) => c.remove())
 
   multiplyPayload = this.animeStep(
     '.payload-clone',
@@ -214,10 +222,65 @@ class Step1 extends StepBase {
     },
     {
       enterStep: this.createPayloadClones,
-      endReverseStep: this.deletePayloadClones,
       onReset: this.deletePayloadClones,
     }
   )
+
+  deadServer = () => {
+    return anime
+      .timeline({ easing: 'linear' })
+      .add(
+        this.animeStep('#server', {
+          rotate: '90deg',
+          duration: 1000,
+          left: '+=30px',
+          top: '+=10px',
+        })
+      )
+      .add(
+        this.animeStep('#server', {
+          opacity: 0,
+          duration: 500,
+        })
+      )
+      .add(
+        this.animeStep('#tombstone', {
+          height: '70px',
+          duration: 500,
+        })
+      )
+  }
+
+  goAway = () => {
+    return anime
+      .timeline({ easing: 'linear' })
+      .add(
+        this.animeStep('.payload-clone, #to-server-arrow, #tombstone', {
+          translateX: {
+            value: function () {
+              return anime.random(1, 2) % 2 === 1 ? anime.random(-10000, -5000) : anime.random(10000, 5000)
+            },
+            delay: anime.stagger(1),
+            duration: 1500,
+          },
+          translateY: {
+            value: function () {
+              return anime.random(1, 2) % 2 === 1 ? anime.random(-10000, -5000) : anime.random(10000, 5000)
+            },
+            delay: anime.stagger(1),
+            duration: 1500,
+          },
+        })
+      )
+      .add(
+        this.animeStep('#payload', {
+          scale: 1,
+          left: '-=100px',
+          duration: 1500,
+        }),
+        0
+      )
+  }
 }
 
 StepBase.register(Step1)

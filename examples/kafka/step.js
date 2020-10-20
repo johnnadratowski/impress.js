@@ -40,16 +40,12 @@ class StepBase extends HTMLElement {
     throw new Error('must name element')
   }
 
-  styles() {
-    return {}
+  startSprites() {
+    return []
   }
 
   substeps() {
     return []
-  }
-
-  view() {
-    return ''
   }
 
   initialize() {
@@ -60,9 +56,8 @@ class StepBase extends HTMLElement {
     this.initialized = true
 
     if (this.step === -1) {
-      // If this step never visited before, build view & step animations
-      this.buildView()
-      this.setStyles()
+      // If this step never visited before, build sprites & step animations
+      this.buildSprites()
 
       const step = this.retrieveStep()
       if (step) {
@@ -98,6 +93,7 @@ class StepBase extends HTMLElement {
     this.steps = []
     this.step = -1
     this.removeSubstepClasses()
+    this.destroySprites()
   }
 
   buildNewStep(i) {
@@ -206,6 +202,8 @@ class StepBase extends HTMLElement {
     if (current && current.endReverseStep) {
       current.endReverseStep(current)
     }
+
+    this.destroySprites(this.step + 1)
   }
 
   storeStep() {
@@ -323,24 +321,112 @@ class StepBase extends HTMLElement {
     StepBase.animating = false
   }
 
-  buildView() {
-    let view = this.view()
+  buildSprites() {
+    this.sprites = []
+    for (const sprite of this.startSprites()) {
+      this.createSprite(sprite)
+    }
 
     // Add a substep class for each substep of this slide
     for (const step in this.substeps()) {
-      view += `<span class="substep substep-${step}"></span>`
+      const el = document.createElement('span')
+      el.classList.add('substep')
+      el.classList.add(`substep-${step}`)
+      this.appendChild(el)
     }
-
-    this.innerHTML = view
   }
 
-  setStyles() {
-    for (const selector of Object.keys(this.styles())) {
-      const styles = this.styles()[selector]
-      const els = document.querySelectorAll(`${this.name()} ${selector}`)
-      for (const el of els) {
-        Object.assign(el.style, styles)
-      }
+  destroySprites(step) {
+    if (!this.sprites) return
+    this.sprites
+      .filter((s) => s.step === step)
+      .forEach((s) => {
+        this.removeChild(s.el)
+      })
+    this.sprites = this.sprites.filter((s) => s.step !== step)
+  }
+
+  createSprite(sprite) {
+    const tag = sprite.tag || 'img'
+    const el = document.createElement(tag)
+    if (!sprite.id) throw new Error('Sprite must have id')
+    if (tag === 'img' && !sprite.src) throw new Error('Sprite must have src')
+    el.id = sprite.id
+    el.setAttribute('src', sprite.src)
+    if (sprite.attrs) {
+      Object.keys(sprite.attrs).forEach((key) => el.setAttribute(key, sprite.attrs[key]))
+    }
+    if (sprite.styles) Object.assign(el.style, sprite.styles)
+    this.appendChild(el)
+
+    const retSprite = {
+      el,
+      step: this.step,
+      sprite,
+    }
+    this.sprites.push(retSprite)
+
+    return retSprite
+  }
+
+  /**
+   * Clone a node into a grid of nodes
+   * className: the name of the class to apply to all clones. If an element exists with it, abort
+   * selector: the selector used to get the node to clone
+   * columns: the number of columns in the grid
+   * rows: the number of rows in the grid
+   * colSize: the size of each grid column in pixels
+   * rowSize: the size of each grid row in pixels
+   * style: extra style to apply to the cloned nodes
+   * colSplit: how many cols on each side of the existing node
+   * rowSplit: how many rows on each side of the existing node
+   */
+  cloneGrid(className, selector, columns, rows, colSize, rowSize, style, colSplit, rowSplit) {
+    if (this.querySelectorAll('.' + className).length) return // Don't need to create payload clones again
+
+    const payload = this.querySelector(selector)
+
+    const payloadTop = parseInt(payload.style.top)
+    const payloadLeft = parseInt(payload.style.left)
+    for (let i = 1; i < rows * columns; i++) {
+      const column = Math.floor(i / rows)
+      const row = i % rows
+
+      const newPayload = this.cloneNode(payload, payload.id + `_${i}`)
+      newPayload.classList.add(className)
+
+      Object.assign(newPayload.style, style)
+      const left = Math.floor(
+        column > colSplit ? payloadLeft + (column - colSplit) * colSize : payloadLeft - column * colSize
+      )
+      const top = Math.floor(row > rowSplit ? payloadTop + (row - rowSplit) * rowSize : payloadTop - row * rowSize)
+      newPayload.style.left = `${left}px`
+      newPayload.style.top = `${top}px`
+
+      this.appendChild(newPayload)
+    }
+  }
+
+  cloneNode(selector, id) {
+    if (typeof selector === 'string') selector = this.querySelector(selector)
+
+    const el = selector.cloneNode()
+    el.id = id
+
+    this.appendChild(el)
+
+    this.sprites.push({
+      el,
+      step: this.step,
+      sprite: this.getSpriteByID(selector.id),
+    })
+
+    return el
+  }
+
+  getSpriteByID(id) {
+    for (const sprite of this.sprites) {
+      if (sprite.el.id === id) return sprite
     }
   }
 
@@ -398,7 +484,6 @@ document.addEventListener('keydown', (e) => {
       return
   }
 
-  if (e.code === 'KeyR') return
   if (StepBase.current && StepBase.animating) {
     return cancelThis(e)
   }
@@ -409,6 +494,7 @@ const cancelThis = (e) => {
   e.stopImmediatePropagation()
   return false
 }
+
 document.addEventListener('keyup', (e) => {
   if (StepBase.current && StepBase.animating) {
     switch (e.code) {
