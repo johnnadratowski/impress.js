@@ -93,7 +93,6 @@ class StepBase extends HTMLElement {
     }
     this.steps = []
     this.step = -1
-    this.removeSubsteps()
     this.resetSprites()
   }
 
@@ -358,6 +357,7 @@ class StepBase extends HTMLElement {
       this.sprites = this.sprites.filter((s) => s.step !== step)
     } else {
       this.sprites = []
+      this.removeSubsteps()
     }
     sprites.forEach((s) => {
       this.removeChild(s.el)
