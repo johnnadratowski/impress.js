@@ -16,8 +16,10 @@ class Step1 extends StepBase {
           height: '275px',
           position: 'absolute',
           top: '200px',
-          left: '-2100px',
-          opacity: 0,
+          left: '0px',
+          opacity: 1,
+          // left: '-2100px',
+          // opacity: 0,
         },
       },
       {
@@ -82,7 +84,7 @@ class Step1 extends StepBase {
 
   substeps() {
     return [
-      'intro',
+      // 'intro',
 
       () => this.createDestAnim('database', '200px'),
 
@@ -102,11 +104,11 @@ class Step1 extends StepBase {
     ]
   }
 
-  intro = this.animeStep('#payload', {
-    left: '0px',
-    opacity: 1,
-    duration: 1000,
-  })
+  // intro = this.animeStep('#payload', {
+  //   left: '0px',
+  //   opacity: 1,
+  //   duration: 1000,
+  // })
 
   createDestAnim(target, top, goAway = true) {
     const t = anime
@@ -267,6 +269,11 @@ class Step1 extends StepBase {
             value: function () {
               return anime.random(1, 2) % 2 === 1 ? anime.random(-10000, -5000) : anime.random(10000, 5000)
             },
+            delay: anime.stagger(1),
+            duration: 1500,
+          },
+          opacity: {
+            value: 0,
             delay: anime.stagger(1),
             duration: 1500,
           },

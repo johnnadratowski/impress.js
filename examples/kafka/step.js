@@ -11,6 +11,8 @@ class StepBase extends HTMLElement {
 
   static connectedSteps = []
 
+  static lastAction = null
+
   static register(step) {
     const s = Object.create(step.prototype)
     customElements.define(s.name(), step)
@@ -56,7 +58,6 @@ class StepBase extends HTMLElement {
     this.initialized = true
 
     if (this.step === -1) {
-      // If this step never visited before, build sprites & step animations
       this.buildSprites()
 
       const step = this.retrieveStep()
@@ -92,8 +93,20 @@ class StepBase extends HTMLElement {
     }
     this.steps = []
     this.step = -1
-    this.removeSubstepClasses()
+    this.removeSubsteps()
+    this.resetSprites()
+  }
+
+  removeSubsteps() {
+    const substeps = this.querySelectorAll('.substep')
+    for (const substep of substeps) {
+      this.removeChild(substep)
+    }
+  }
+
+  resetSprites() {
     this.destroySprites()
+    this.buildSprites()
   }
 
   buildNewStep(i) {
@@ -322,6 +335,7 @@ class StepBase extends HTMLElement {
   }
 
   buildSprites() {
+    if (this.sprites && this.sprites.length) return
     this.sprites = []
     for (const sprite of this.startSprites()) {
       this.createSprite(sprite)
@@ -338,12 +352,16 @@ class StepBase extends HTMLElement {
 
   destroySprites(step) {
     if (!this.sprites) return
-    this.sprites
-      .filter((s) => s.step === step)
-      .forEach((s) => {
-        this.removeChild(s.el)
-      })
-    this.sprites = this.sprites.filter((s) => s.step !== step)
+    let sprites = this.sprites
+    if (step) {
+      sprites = sprites.filter((s) => s.step === step)
+      this.sprites = this.sprites.filter((s) => s.step !== step)
+    } else {
+      this.sprites = []
+    }
+    sprites.forEach((s) => {
+      this.removeChild(s.el)
+    })
   }
 
   createSprite(sprite) {
@@ -439,11 +457,14 @@ class StepBase extends HTMLElement {
   }
 
   connectedCallback() {
+    console.log('CONN')
     StepBase.connectedSteps.push(this)
+    this.buildSprites()
   }
 
   disconnectedCallback() {
-    for (let i = 0; i < StepBase.connectedSteps; i++) {
+    console.log('DISCONN')
+    for (let i = 0; i < StepBase.connectedSteps.length; i++) {
       if (this === StepBase.connectedSteps[i]) {
         StepBase.connectedSteps.splice(i, 1)
         break
@@ -476,6 +497,14 @@ document.addEventListener('impress:stepleave', (e) => {
 })
 
 document.addEventListener('keydown', (e) => {
+  if (e.code === 'ArrowLeft' || (e.shiftKey && e.code === 'Tab') || e.code === 'KeyB') {
+    StepBase.lastAction = 'prev'
+  } else if (e.code === 'ArrowRight' || e.code === 'Tab' || e.code == 'Space' || e.code === 'KeyF') {
+    StepBase.lastAction = 'next'
+  } else {
+    StepBase.lastAction = null
+  }
+
   switch (e.code) {
     case 'KeyR':
     case 'KeyF':
