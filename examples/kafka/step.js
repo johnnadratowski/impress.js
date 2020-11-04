@@ -165,7 +165,7 @@ class StepBase extends HTMLElement {
   }
 
   async doNext(e) {
-    console.log('NEXT SUBSTEP: ', e)
+    console.log(`NEXT SUBSTEP (${this.name()}): `, e)
     if (this.step + 1 >= this.substeps().length) {
       console.error('INVALID SUBSTEP DETECTED')
       return
@@ -191,7 +191,7 @@ class StepBase extends HTMLElement {
   }
 
   async doPrev(e) {
-    console.log('PREV SUBSTEP: ', e)
+    console.log(`PREV SUBSTEP (${this.name()}): `, e)
     if (!this.steps > 0) {
       console.error('INVALID SUBSTEP DETECTED')
       return
@@ -215,7 +215,9 @@ class StepBase extends HTMLElement {
       current.endReverseStep(current)
     }
 
-    this.destroySprites(this.step + 1)
+    if (this.step > -1) {
+      this.destroySprites(this.step + 1)
+    }
   }
 
   storeStep() {
@@ -457,13 +459,11 @@ class StepBase extends HTMLElement {
   }
 
   connectedCallback() {
-    console.log('CONN')
     StepBase.connectedSteps.push(this)
     this.buildSprites()
   }
 
   disconnectedCallback() {
-    console.log('DISCONN')
     for (let i = 0; i < StepBase.connectedSteps.length; i++) {
       if (this === StepBase.connectedSteps[i]) {
         StepBase.connectedSteps.splice(i, 1)

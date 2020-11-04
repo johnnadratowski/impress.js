@@ -18,8 +18,6 @@ class Step1 extends StepBase {
           top: '200px',
           left: '0px',
           opacity: 1,
-          // left: '-2100px',
-          // opacity: 0,
         },
       },
       {
