@@ -6,3 +6,5 @@
 
 # Files for editors and other tools
 /.brackets.json
+
+.DS_Store
